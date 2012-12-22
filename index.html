@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Scaleable map</title>
+	<link href="http://necolas.github.com/normalize.css/2.0.1/normalize.css" rel="stylesheet" type="text/css"/>
+
+	<style type="text/css">
+	html, body {
+		height: 100%;
+		color: #333;
+		box-sizing: border-box;
+	}
+
+	.header h1 {
+		font-size: 1.5em;
+	}
+
+	.page-container {
+		margin-left: 2em;
+	}
+
+	.map-container {
+		position: relative;
+		overflow: hidden;
+		width: 100%;
+		max-height: 500px;
+		max-width: 850px;
+	}
+
+	.airport {
+		display: block;
+		position: relative;
+		width: 100%;
+		box-sizing: border-box;
+	}
+
+	.airport > img {
+		width: 100%;
+	}
+
+	.marker {
+		position: absolute;
+		border: 1px solid #57699f;
+		color: black;
+		width: 1.5em;
+		height: 1.5em;
+		font-weight: bold;
+		font-size: 0.8em;
+		line-height: 1.5em;
+		text-align: center;
+		background-position: center;
+		background-repeat: repeat-y;
+		box-shadow: 1px 1px 2px #666;
+		background-color: white;
+		box-sizing: border-box;
+	}
+
+	.arr {
+		background-image: url(bluewhite.png);
+	}
+
+	.dep {
+		background-image: url(whiteblue.png);
+	}
+
+	.arr.dep {
+		background-image: none;
+		background-color: #57699f;
+	}
+
+
+	.marker > div {
+		display: none;
+		font-size: 0.5em;
+		width: 130px;
+		background-color: white;
+		border: 1px solid #999;
+		border-radius: 0px;
+		position: absolute;
+		top: 0;
+		z-index: 10;
+		box-shadow: 1px 1px 2px #666;
+	}
+
+	.marker > div.left {
+		left: -140px;
+	}
+
+	.marker > div.right {
+		left: 30px;
+	}
+
+	.marker.show-flight {
+		border: 3px solid #335588;
+		line-height: 1.2em;
+		z-index: 999;
+	}
+
+	.marker.show-flight > div {
+		display: block;
+	}
+
+	.marker:hover {
+		cursor: pointer;
+	}
+
+	#gate11 { left: 87%; top: 49%;}
+	#gate12 { left: 86%; top: 39%;}
+	#gate13 { left: 83%; top: 34%;}
+	#gate14 { left: 80%; top: 30%;}
+	#gate15 { left: 77%; top: 26%;}
+	#gate16 { left: 89%; top: 18%;}
+	#gate17 { left: 85%; top: 18%;}
+	#gate18 { left: 81%; top: 18%;}
+	#gate19 { left: 77%; top: 18%;}
+	#gate20 { left: 70%; top: 19%;}
+	#gate21 { left: 67%; top: 14%;}
+	#gate22 { left: 63%; top:  9%;}
+	#gate23 { left: 61%; top:  6%;}
+	#gate24 { left: 58%; top:  1%;}
+	#gate25 { left: 53%; top:  3%;}
+	#gate26 { left: 49%; top:  7%;}
+	#gate27 { left: 45%; top: 12%;}
+	#gate28 { left: 40%; top: 18%;}
+	#gate29 { left: 35%; top: 24%;}
+	#gate30 { left: 30%; top: 30%;}
+	#gate31 { left: 22%; top: 35%;}
+	#gate32 { left: 13%; top: 46%;}
+	#gate33 { left:  8%; top: 52%;}
+	#gate34 { left:  2%; top: 58%;}
+	#gate35 { left:  0%; top: 75%;}
+	#gate36 { left:  7%; top: 82%;}
+	#gate37 { left: 15%; top: 90%;}
+	#gate38 { left: 24%; top: 97%;}
+
+	.gate-table {
+		margin-top: 1em;
+		background-color: #ccd;
+		border-collapse: collapse;
+		float: left;
+	}
+
+	.gate-table th {
+		font-weight: normal;
+		letter-spacing: 0.2em;
+		background-color: #336;
+		color: white;
+	}
+
+	.gate-table td, .gate-table th {
+		border: 2px solid white;
+		padding: 3px;
+		text-align: center;
+		font-size: 0.8em;
+	}
+
+	.highlight {
+		background-color: white !important;
+	}
+
+	tr:nth-child(even) {
+		background-color: #ddf;;
+	}
+
+
+	</style>
+
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
+
+	<script type="text/javascript">
+	$(document).ready(function() {
+		$('.marker').hover(function() {
+			var rowId = $(this).attr('data-row');
+			$('#'+rowId).toggleClass('highlight');
+			$(this).toggleClass('show-flight');
+		}, function() {
+			var rowId = $(this).attr('data-row');
+			$('#'+rowId).toggleClass('highlight');
+			
+			$(this).toggleClass('show-flight');
+		});
+	
+		$('.gaterow').hover(function() {
+			$(this).toggleClass('highlight');
+			var markerId = $(this).attr('data-marker');
+			$('#' + markerId).toggleClass('show-flight');
+		}, function() {
+			$(this).toggleClass('highlight');
+			var markerId = $(this).attr('data-marker');
+			$('#' + markerId).toggleClass('show-flight');
+		});
+
+		$('#show-all').change(function() {
+			var checked = $(this).attr('checked') !== undefined;
+			$('.marker').toggleClass('show-flight'); 
+		});
+	});
+	</script>
+</head>
+<body>
+
+	<div class="page-container">
+	<header class="header">
+		<h3>UX POC: Scalable map with relative markers linked to data table</h1>
+	</header>
+
+	<div class="map-container">
+	<input name="show-all" id="show-all" type="checkbox"> <label for="show-all">Show all flights</label>
+	<div class="airport">
+	<img src="map.png">
+
+	<div id="gate11" class="marker" data-row="row11">11</div>
+	<div id="gate12" class="marker arr dep" data-row="row12">12
+		<div class="left">14:55 AY1234 EST 15:00</div><div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate13" class="marker arr" data-row="row13">13
+		<div class="left">14:55 AY1234 EST 15:00</div>
+	</div>
+	<div id="gate14" class="marker arr dep" data-row="row14">14
+		<div class="left">14:55 AY1234 EST 15:00</div><div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate15" class="marker dep" data-row="row15">15
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate16" class="marker dep" data-row="row16">16
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate17" class="marker dep" data-row="row17">17
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate18" class="marker dep" data-row="row18">18
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate19" class="marker dep" data-row="row19">19
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate20" class="marker dep" data-row="row20">20
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate21" class="marker dep" data-row="row21">21
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate22" class="marker dep" data-row="row22">22
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate23" class="marker dep" data-row="row23">23
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate24" class="marker dep" data-row="row24">24
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>	
+	<div id="gate25" class="marker" data-row="row25">25</div>
+	<div id="gate26" class="marker arr dep" data-row="row26">26
+		<div class="left">14:55 AY1234 EST 15:00</div><div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate27" class="marker arr" data-row="row27">27
+		<div class="left">14:55 AY1234 EST 15:00</div>
+	</div>
+	<div id="gate28" class="marker arr dep" data-row="row28">28
+		<div class="left">14:55 AY1234 EST 15:00</div><div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate29" class="marker dep" data-row="row29">29
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate30" class="marker dep" data-row="row30">30
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate31" class="marker dep" data-row="row31">31
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate32" class="marker dep" data-row="row32">32
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate33" class="marker dep" data-row="row33">33
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate34" class="marker dep" data-row="row34">34
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate35" class="marker dep" data-row="row35">35
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate36" class="marker dep" data-row="row33">36
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate37" class="marker dep" data-row="row34">37
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+	<div id="gate38" class="marker dep" data-row="row35">38
+		<div class="right">14:04 AY1234 Go to Gate</div>
+	</div>
+
+	</div>
+	</div>
+
+
+	<table class="gate-table">
+		<tr><th>Arriving</th><th>#</th><th>Gate</th><th>#</th><th>Departing</th></tr>
+		<tr id="row11" class="gaterow" data-marker="gate11"><td></td><td>5</td><td>11</td><td>3</td><td></td></tr>
+		<tr id="row12" class="gaterow" data-marker="gate12"><td>12:03 AY1234 ETA 13:00</td><td>5</td><td>12</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row13" class="gaterow" data-marker="gate13"><td>12:03 AY1234 ETA 13:00</td><td>5</td><td>13</td><td>3</td><td></td></tr>
+		<tr id="row14" class="gaterow" data-marker="gate14"><td>12:03 AY1234 ETA 13:00</td><td>5</td><td>14</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row15" class="gaterow" data-marker="gate15"><td></td><td>5</td><td>15</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row16" class="gaterow" data-marker="gate16"><td></td><td>5</td><td>16</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row17" class="gaterow" data-marker="gate17"><td></td><td>5</td><td>17</td><td>3</td><td></td></tr>
+		<tr id="row18" class="gaterow" data-marker="gate18"><td>12:03 AY1234 ETA 13:00</td><td>5</td><td>18</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row19" class="gaterow" data-marker="gate19"><td>12:03 AY1234 ETA 13:00</td><td>5</td><td>19</td><td>3</td><td></td></tr>
+		<tr id="row20" class="gaterow" data-marker="gate20"><td>12:03 AY1234 ETA 13:00</td><td>5</td><td>20</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row21" class="gaterow" data-marker="gate21"><td></td><td>5</td><td>21</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row22" class="gaterow" data-marker="gate22"><td></td><td>5</td><td>22</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row23" class="gaterow" data-marker="gate23"><td>12:03 AY1234 ETA 13:00</td><td>5</td><td>23</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row24" class="gaterow" data-marker="gate24"><td></td><td>5</td><td>24</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+	</table>
+
+	<table class="gate-table">
+		<tr><th>Arriving</th><th>#</th><th>Gate</th><th>#</th><th>Departing</th></tr>
+		<tr id="row25" class="gaterow" data-marker="gate25"><td></td><td>5</td><td>25</td><td>3</td><td></td></tr>
+		<tr id="row26" class="gaterow" data-marker="gate26"><td>12:03 AY1234 ETA 13:00</td><td>5</td><td>26</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row27" class="gaterow" data-marker="gate27"><td>12:03 AY1234 ETA 13:00</td><td>5</td><td>27</td><td>3</td><td></td></tr>
+		<tr id="row28" class="gaterow" data-marker="gate28"><td>12:03 AY1234 ETA 13:00</td><td>5</td><td>28</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row29" class="gaterow" data-marker="gate29"><td></td><td>5</td><td>29</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row30" class="gaterow" data-marker="gate30"><td></td><td>5</td><td>30</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row31" class="gaterow" data-marker="gate31"><td></td><td>5</td><td>31</td><td>3</td><td></td></tr>
+		<tr id="row32" class="gaterow" data-marker="gate32"><td>12:03 AY1234 ETA 13:00</td><td>5</td><td>32</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row33" class="gaterow" data-marker="gate33"><td>12:03 AY1234 ETA 13:00</td><td>5</td><td>33</td><td>3</td><td></td></tr>
+		<tr id="row34" class="gaterow" data-marker="gate34"><td>12:03 AY1234 ETA 13:00</td><td>5</td><td>34</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row35" class="gaterow" data-marker="gate35"><td></td><td>5</td><td>35</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row36" class="gaterow" data-marker="gate36"><td></td><td>5</td><td>36</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row37" class="gaterow" data-marker="gate37"><td></td><td>5</td><td>37</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+		<tr id="row38" class="gaterow" data-marker="gate38"><td></td><td>5</td><td>38</td><td>3</td><td>12:03 AY1234 Boarding</td></tr>
+	</table>
+
+
+	</div>
+</body>
+
+</html>
